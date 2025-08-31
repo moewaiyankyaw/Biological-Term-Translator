@@ -1,11 +1,26 @@
 import requests
 import urllib.parse
-from telegram import Update, Bot
+import os
+from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import asyncio
+from flask import Flask, jsonify
 
-# Telegram Bot Token
-TELEGRAM_TOKEN = "8008763177:AAGGPXWJI9LZ853mb5CPK0M8-93B_ppCTlo"
+# Initialize Flask app for health checks
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return jsonify({"status": "ok", "message": "Biological Term Translator Bot is running"})
+
+@app.route('/health')
+def health():
+    return jsonify({"status": "healthy"})
+
+# Telegram Bot Token from environment variable
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '8008763177:AAGGPXWJI9LZ853mb5CPK0M8-93B_ppCTlo')
+PORT = int(os.environ.get('PORT', 10000))  # Fixed to port 10000
+HOST = '0.0.0.0'  # Bind to all interfaces
 
 def get_biological_meaning(term):
     """
@@ -114,7 +129,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update and update.message:
         await update.message.reply_text("Sorry, something went wrong. Please try again later.")
 
-def main():
+async def main():
     """Main function to run the bot"""
     print("Starting Biological Term Translator Telegram Bot...")
     
@@ -128,41 +143,26 @@ def main():
     application.add_error_handler(error_handler)
     
     # Start the bot
-    print("Bot is running... Press Ctrl+C to stop.")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
-
-def console_main():
-    """Original console version for testing"""
-    print("Biological Term Translator to Burmese")
-    print("=" * 40)
+    print("Bot is running...")
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling()
     
-    while True:
-        # Get user input
-        term = input("\nEnter a biological term (or 'quit' to exit): ").strip()
-        
-        if term.lower() in ['quit', 'exit', 'q']:
-            print("Goodbye!")
-            break
-            
-        if not term:
-            print("Please enter a valid term.")
-            continue
-        
-        print(f"\nGetting meaning for: {term}")
-        print("🤔 Thinking The Translation...")
-        
-        # Get the meaning
-        result = get_biological_meaning(term)
-        
-        # Display the result
-        print("\n" + "=" * 40)
-        print("RESULT:")
-        print(result)
-        print("=" * 40)
+    # Keep the application running
+    await asyncio.Event().wait()
+
+def run_flask():
+    """Run Flask app for health checks on port 10000 and bind to 0.0.0.0"""
+    print(f"Starting Flask server on {HOST}:{PORT}")
+    app.run(host=HOST, port=PORT, debug=False)
 
 if __name__ == "__main__":
-    # To run the Telegram bot, use:
-    main()
+    # For Render deployment, we need to run both Flask and Telegram bot
+    import threading
     
-    # To run the console version for testing, use:
-    # console_main()
+    # Start Flask in a separate thread for health checks
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    
+    # Run the Telegram bot in the main thread
+    asyncio.run(main())
