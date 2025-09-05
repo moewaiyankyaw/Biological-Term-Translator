@@ -27,7 +27,7 @@ def get_biological_meaning(term):
     Get the biological meaning of a term in Burmese from the Paxsenix API
     """
     # Base API URL
-    base_url = "https://api.paxsenix.biz.id/v1/deepseek-chat/chat"
+    base_url = "https://api.paxsenix.dpdns.org/v1/deepseek-chat/chat"
     
     # Construct the prompt with the user's term
     prompt = f'Provide the biological meaning of the following term in Burmese. Use this exact format: \'Meaning Of [Term] In Burmese :\' followed by the definition. The definition should be a direct translation of the scientific meaning, similar to this example for \'Glycogen\':Meaning Of Glycogen In Burmese : glucos(မော်လီကျူး)နှင့်တူသောဖွဲ့စည်းပုံရှိသည့် polysaccharide ဖြစ်ပြီး ကျွန်ုပ်တို့ခန္ဓာကိုယ်တွင်သိုလှောင်ထားသော ကာဗိုဟိုက်ဒရိတ်ပုံစံတစ်မျိုးဖြစ်သည်.Now provide the meaning for: \'{term}\''
